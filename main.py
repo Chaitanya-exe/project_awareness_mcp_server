@@ -1,12 +1,16 @@
 from fastmcp import FastMCP
-import requests
 import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path("/Users/chaitanyayadav/personal/code/ai_projects/local_MCP_server")
 
 mcp = FastMCP(name='local_code_access',
-              instructions='This server allows the client to acces files within a specified directory and can execute git cli commands')
+              instructions='This server allows the client to acces files within a specified directory and can execute git cli commands',
+              )
 
 @mcp.tool
-def execute_git_command(action: str, args: list[str], message: str | None) -> dict:
+def execute_git_command(action: str, args: list[str] | None = None, message: str | None = None) -> dict:
     """
     This tool allows the client to execute git CLI commands
     the current actions allowed are:
@@ -50,7 +54,8 @@ def execute_git_command(action: str, args: list[str], message: str | None) -> di
         command,
         capture_output=True,
         check=False,
-        text=True
+        text=True,
+        cwd=REPO_ROOT
     )
     
     return {
@@ -62,4 +67,9 @@ def execute_git_command(action: str, args: list[str], message: str | None) -> di
 
 
 if __name__ == "__main__":
-    mcp.run()
+    try:
+        mcp.run()
+    except Exception as e:
+        import traceback
+        traceback.print_exc(e)
+        print(e, file=sys.stderr)
