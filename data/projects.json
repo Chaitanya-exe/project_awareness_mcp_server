@@ -1,6 +1,6 @@
 {
-    "active_project":"AI_interview_caller",
-    "projects":{
-        "AI_interview_caller": "some_path"
+    "active_project": "local mcp server ",
+    "projects": {
+        "local mcp server ": "/Users/chaitanyayadav/personal/code/ai_projects/local_MCP_server"
     }
 }
