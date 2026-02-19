@@ -2,12 +2,10 @@ from fastmcp import FastMCP
 from tools.git_executor import Git
 from routes.project_routes import register_project_routes
 import sys
-from pathlib import Path
-from starlette.staticfiles import StaticFiles
 
 mcp = FastMCP(name='local_code_access',
-              instructions='This server allows the client to acces files within a specified directory and can execute git cli commands',
-              )
+              instructions='This server allows the client to acces files within a specified directory and can execute git cli commands and basic shell commands',
+            )
 
 mcp.add_tool(Git().execute_git_command)
 register_project_routes(mcp)

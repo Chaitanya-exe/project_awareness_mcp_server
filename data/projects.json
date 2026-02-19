@@ -1,6 +1,7 @@
 {
-    "active_project": "local mcp server ",
+    "active_project": "course recommender system",
     "projects": {
-        "local mcp server ": "/Users/chaitanyayadav/personal/code/ai_projects/local_MCP_server"
+        "local mcp server ": "/Users/chaitanyayadav/personal/code/ai_projects/local_MCP_server",
+        "course recommender system": "/Users/chaitanyayadav/personal/code/ai_projects/hf_models"
     }
 }
