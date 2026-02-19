@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MCP Project Manager</title>
+
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --border: #334155;
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --danger: #ef4444;
+  }
+
+  * {
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  h1 {
+    font-size: 24px;
+    margin-bottom: 24px;
+    font-weight: 600;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  }
+
+  .card h2 {
+    margin-top: 0;
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #0f172a;
+    color: var(--text);
+    outline: none;
+  }
+
+  input:focus {
+    border-color: var(--accent);
+  }
+
+  button {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s ease;
+  }
+
+  .primary {
+    background: var(--accent);
+    color: white;
+  }
+
+  .primary:hover {
+    background: var(--accent-hover);
+  }
+
+  .danger {
+    background: var(--danger);
+    color: white;
+  }
+
+  .projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .project-item {
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0f172a;
+  }
+
+  .project-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .project-name {
+    font-weight: 500;
+  }
+
+  .project-path {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .active-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--accent);
+    margin-left: 8px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+  }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <h1>🧠 MCP Project Manager</h1>
+
+  <div class="card">
+    <h2>Add Project</h2>
+    <input id="name" placeholder="Project Name" />
+    <input id="path" placeholder="Project Path (/Users/...)" />
+    <button class="primary" onclick="addProject()">Add Project</button>
+  </div>
+
+  <div class="card">
+    <h2>Registered Projects</h2>
+    <div id="projects" class="projects-list"></div>
+  </div>
+
+</div>
+
+<script>
+async function fetchState() {
+  const res = await fetch("/projects");
+  const data = await res.json();
+  renderProjects(data);
+}
+
+function renderProjects(data) {
+  const container = document.getElementById("projects");
+  container.innerHTML = "";
+
+  const active = data.active_project;
+
+  for (const [name, path] of Object.entries(data.projects)) {
+    const item = document.createElement("div");
+    item.className = "project-item";
+
+    const info = document.createElement("div");
+    info.className = "project-info";
+
+    const nameRow = document.createElement("div");
+    nameRow.className = "project-name";
+    nameRow.innerText = name;
+
+    if (name === active) {
+      const badge = document.createElement("span");
+      badge.className = "active-badge";
+      badge.innerText = "ACTIVE";
+      nameRow.appendChild(badge);
+    }
+
+    const pathEl = document.createElement("div");
+    pathEl.className = "project-path";
+    pathEl.innerText = path;
+
+    info.appendChild(nameRow);
+    info.appendChild(pathEl);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const activateBtn = document.createElement("button");
+    activateBtn.className = "primary";
+    activateBtn.innerText = "Activate";
+    activateBtn.onclick = () => activateProject(name);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "danger";
+    deleteBtn.innerText = "Delete";
+    deleteBtn.onclick = () => deleteProject(name);
+
+    actions.appendChild(activateBtn);
+    actions.appendChild(deleteBtn);
+
+    item.appendChild(info);
+    item.appendChild(actions);
+
+    container.appendChild(item);
+  }
+}
+
+async function addProject() {
+  await fetch("/projects", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: document.getElementById("name").value,
+      path: document.getElementById("path").value
+    })
+  });
+  fetchState();
+}
+
+async function activateProject(name) {
+  await fetch("/projects/activate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name })
+  });
+  fetchState();
+}
+
+async function deleteProject(name) {
+  await fetch(`/projects/${name}`, {
+    method: "DELETE"
+  });
+  fetchState();
+}
+
+fetchState();
+</script>
+</body>
+</html>
