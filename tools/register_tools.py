@@ -1,9 +1,11 @@
 from .git_tools.git import Git
 from .project_tree_tool.tree import ProjectStructure
+from .file_search_tools.search import SearchFiles
 from fastmcp import FastMCP
 
 git_tool = Git()
 structure_tool = ProjectStructure()
+file_tool = SearchFiles()
 
 def register_git_tools(mcp: FastMCP):
 
@@ -177,3 +179,111 @@ def register_project_structure_tools(mcp: FastMCP):
         }
     """
         return structure_tool.get_project_tree(depth)
+    
+    @mcp.tool
+    def list_directory(relative_path: str = ".") -> dict:
+        """
+    List files and subdirectories within a specified project-relative directory.
+
+    This tool provides a non-recursive view of the contents of a directory
+    inside the active project. It is intended for targeted exploration after
+    identifying a relevant folder using `get_project_tree`.
+
+    Args:
+        relative_path (str, optional):
+            Path relative to the active project root.
+            Defaults to "." (project root).
+
+    Returns:
+        dict:
+            {
+                "path": str,           # The resolved project-relative directory
+                "directories": list[str],
+                "files": list[str]
+            }
+
+    Behavior:
+        - Only lists immediate children (non-recursive).
+        - Traversal is restricted to the active project root.
+        - Prevents directory traversal outside the project.
+        - Skips common large or irrelevant directories such as:
+            .git, .venv, node_modules, __pycache__, etc.
+        - Does not read file contents.
+
+    Intended Use:
+        - Explore a specific folder in detail.
+        - Identify candidate files to inspect next.
+        - Narrow context before calling `read_file`.
+
+    Failure Response:
+        {
+            "error": str
+        }
+    """
+        return structure_tool.list_directory(relative_path)
+    
+
+def register_file_tools(mcp: FastMCP):
+
+    @mcp.tool
+    def read_files(relative_path: str, mode: str = "auto",start_line: int | None = None, end_line: int | None = None, max_chars: int = 8000):
+        """
+    Read the contents of a file within the active project in a controlled manner.
+
+    This tool retrieves file content relative to the active project root.
+    It supports full-file reading with automatic truncation, or selective
+    line-based reading for precise inspection.
+
+    Args:
+        relative_path (str):
+            Path to the file relative to the active project root.
+
+        mode (str, optional):
+            Reading mode. Supported values:
+                - "auto": Return full file content, truncated to `max_chars`
+                          if necessary.
+                - "lines": Return only the specified line range.
+            Default is "auto".
+
+        start_line (int | None, optional):
+            Required when mode="lines".
+            Starting line number (0-indexed).
+
+        end_line (int | None, optional):
+            Required when mode="lines".
+            Ending line number (0-indexed, inclusive).
+
+        max_chars (int, optional):
+            Maximum number of characters returned in "auto" mode.
+            Default is 8000.
+
+    Returns:
+        dict:
+            {
+                "path": str,          # Project-relative file path
+                "start_line": int,    # First line returned
+                "end_line": int,      # Last line returned
+                "total_lines": int,   # Total lines in file
+                "truncated": bool,    # Whether content was truncated
+                "content": str        # File content (or selected portion)
+            }
+
+    Behavior:
+        - Access is restricted to files within the active project root.
+        - Directory traversal outside the project is blocked.
+        - Only read access is performed (no modification).
+        - In "auto" mode, content exceeding `max_chars` is truncated.
+        - In "lines" mode, only the specified line range is returned.
+
+    Intended Use:
+        - Inspect specific modules or scripts.
+        - Review implementation details before refactoring.
+        - Combine with `search_files` to read relevant sections.
+        - Expand context gradually to avoid excessive token usage.
+
+    Failure Response:
+        {
+            "error": str
+        }
+    """
+        return file_tool.read_file(relative_path, mode, start_line, end_line, max_chars)

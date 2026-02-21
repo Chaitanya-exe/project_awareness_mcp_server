@@ -1,14 +1,15 @@
 from fastmcp import FastMCP
-from tools import register_git_tools, register_project_structure_tools
+from tools import register_git_tools, register_project_structure_tools, register_file_tools
 from routes.project_routes import register_project_routes
 import sys
 
-mcp = FastMCP(name='local_code_access',
-              instructions='This server allows the client to acces files within a specified directory and can execute git cli commands and basic shell commands',
+mcp = FastMCP(name='project_context_interface',
+              instructions='This mcp server allows the MCP clients to execute various tools to get information about a project in a specified directory, clients can access repo information, project structure and read files for full project context.',
             )
 
 register_git_tools(mcp)
 register_project_structure_tools(mcp)
+register_file_tools(mcp)
 register_project_routes(mcp)
 
 
