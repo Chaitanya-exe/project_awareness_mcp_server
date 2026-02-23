@@ -1,5 +1,5 @@
 from fastmcp import FastMCP
-from tools import register_git_tools, register_project_structure_tools, register_file_tools
+from tools import register_git_tools, register_project_structure_tools, register_file_tools, register_manager_tools
 from routes.project_routes import register_project_routes
 import sys
 import argparse
@@ -32,6 +32,7 @@ def main():
     register_project_structure_tools(mcp)
     register_file_tools(mcp)
     register_project_routes(mcp)
+    register_manager_tools(mcp)
 
     args = parser.parse_args()
 

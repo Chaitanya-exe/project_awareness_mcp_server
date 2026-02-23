@@ -61,7 +61,7 @@ class ProjectStructure:
         
         target_path = (root / relative_path).resolve()
 
-        if not str(target_path).startswith(root):
+        if not str(target_path).startswith(str(root)):
             return {"error":"access denied"}
         
         if not target_path.exists():

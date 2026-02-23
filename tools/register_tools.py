@@ -1,11 +1,13 @@
 from .git_tools.git import Git
 from .project_tree_tool.tree import ProjectStructure
 from .file_search_tools.search import SearchFiles
+from .project_management.manager import Manager
 from fastmcp import FastMCP
 
 git_tool = Git()
 structure_tool = ProjectStructure()
 file_tool = SearchFiles()
+manager = Manager()
 
 def register_git_tools(mcp: FastMCP):
 
@@ -126,7 +128,6 @@ def register_git_tools(mcp: FastMCP):
     """
         return git_tool.get_diff(file)
     
-
 def register_project_structure_tools(mcp: FastMCP):
 
     @mcp.tool
@@ -222,7 +223,6 @@ def register_project_structure_tools(mcp: FastMCP):
     """
         return structure_tool.list_directory(relative_path)
     
-
 def register_file_tools(mcp: FastMCP):
 
     @mcp.tool
@@ -287,3 +287,48 @@ def register_file_tools(mcp: FastMCP):
         }
     """
         return file_tool.read_file(relative_path, mode, start_line, end_line, max_chars)
+
+def register_manager_tools(mcp: FastMCP):
+
+    @mcp.tool
+    def list_project():
+        """
+        returns a structured JSON response with a list of all the created projects.
+
+        args: None
+        """
+
+        return manager.list_projects()
+    
+    @mcp.tool
+    def set_current_project(name: str):
+        """
+        This tool sets the provide name as the current project which is provided by the user
+
+        args: 
+        name - Name of the project provided by the user
+        """
+        return manager.set_current_project(name)
+    
+    @mcp.tool
+    def delete_project(name: str):
+        """
+        This tool deletes the project with 'name' provided by the user
+
+        args:
+        name - Name of the project provided by the user
+        """
+        return manager.delete_project(name)
+    
+    @mcp.tool
+    def add_project(name: str, path: str):
+        """
+        This tool adds a new project with the 'name' and its directory 'path' both provided by the user
+
+        args:
+        name - Name of the project provided by the user
+        path - Path of the project directory provided by the user
+        """
+        return manager.add_projects(name, path)
+
+
