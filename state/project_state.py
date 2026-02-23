@@ -6,13 +6,13 @@ DATA_FILE = Path("data/projects.json")
 LOCK = Lock()
 
 def _load():
-    if not DATA_FILE.exists():
-        return {
-            "active_project": None,
-            "projects": {}
-        }
-    
-    return json.loads(DATA_FILE.read_text())
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    default_data = {
+        "active_project": None,
+        "projects": {}
+    }
+    DATA_FILE.write_text(json.dumps(default_data, indent=4))
+    return default_data
 
 def _save(data):
     DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
