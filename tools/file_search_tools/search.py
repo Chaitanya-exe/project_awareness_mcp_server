@@ -1,5 +1,5 @@
 from pathlib import Path
-from state.project_state import get_current_project_path
+from tools.utils import get_current_project_path
 
 class SearchFiles:
     def __init__(self):
@@ -8,7 +8,7 @@ class SearchFiles:
     def read_file(self, relative_path: str, mode: str = "auto",start_line: int | None = None, end_line: int | None = None, max_chars: int = 8000) -> dict:
         
         try:
-            root = get_current_project_path()
+            root = Path(get_current_project_path()).resolve()
         except Exception as e:
             return {"error":str(e)}
         

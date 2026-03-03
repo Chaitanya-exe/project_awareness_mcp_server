@@ -1,5 +1,5 @@
 from pathlib import Path
-from state.project_state import get_current_project_path
+from tools.utils import get_current_project_path
 
 IGNORED_DIRS = {
     ".git",
@@ -40,7 +40,7 @@ class ProjectStructure:
     
     def get_project_tree(self, depth: int = 2) -> dict:
         try:
-            root = get_current_project_path()
+            root = Path(get_current_project_path()).resolve()
         except Exception as e:
             return {"error":str(e)}
         
@@ -55,7 +55,7 @@ class ProjectStructure:
     def list_directory(self, relative_path: str = '.') -> dict:
         
         try:
-            root = get_current_project_path()
+            root = Path(get_current_project_path()).resolve()
         except Exception as e:
             return {"error": str(e)}
         

@@ -41,7 +41,7 @@ class Manager:
             
             active = session.query(ActiveProject).first()
             if not active:
-                active = ActiveProject(name=name)
+                active = ActiveProject(project_name=name)
                 session.add(active)
             else:
                 active.project_name = name

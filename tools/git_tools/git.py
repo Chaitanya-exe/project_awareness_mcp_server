@@ -1,6 +1,6 @@
 import subprocess
 from pydantic import BaseModel, Field
-from state.project_state import get_current_project_path
+from tools.utils import get_current_project_path
 
 class GitParameters(BaseModel):
     action: str = Field(..., description="The git action to perform (status, diff, log, branch, add, commit)")
