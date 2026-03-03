@@ -1,6 +1,7 @@
 from fastmcp import FastMCP
 from tools import register_git_tools, register_project_structure_tools, register_file_tools, register_manager_tools
 from routes.project_routes import register_project_routes
+from db.config import Base, engine
 import sys
 import argparse
 
@@ -33,7 +34,7 @@ def main():
     register_file_tools(mcp)
     register_project_routes(mcp)
     register_manager_tools(mcp)
-
+    Base.metadata.create_all(bind=engine)
     args = parser.parse_args()
 
     if args.mode.startswith("http"):

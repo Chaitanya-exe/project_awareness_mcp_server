@@ -8,7 +8,7 @@ RUN uv sync --frozen
 
 COPY . .
 
-ENV DATABASE_URL="postgresql+psycopg://mcp_user:mcp_pass1234@localhost:5432/mcp_server"
+ENV DATABASE_URL="postgresql+psycopg://mcp_user:mcp_pass1234@host.docker.internal:5432/mcp_server"
 
 EXPOSE 8000
 

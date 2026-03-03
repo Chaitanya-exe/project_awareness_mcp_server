@@ -7,6 +7,6 @@ requires-python = ">=3.13"
 dependencies = [
     "fastmcp>=3.0.0b1",
     "mcpo>=0.0.19",
-    "psycopg2-binary>=2.9.11",
+    "psycopg[binary]>=3.3.3",
     "sqlalchemy>=2.0.48",
 ]
