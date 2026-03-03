@@ -2,7 +2,8 @@ import json
 from pathlib import Path
 from threading import Lock
 
-DATA_FILE = Path("data/projects.json")
+
+DATA_FILE = Path("/app/data/projects.json").resolve()
 LOCK = Lock()
 
 def _load():
@@ -17,6 +18,7 @@ def _load():
 def _save(data):
     DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
     DATA_FILE.write_text(json.dumps(data, indent=4))
+    print(f"data saved at {DATA_FILE}")
 
 def get_state():
     with LOCK:
