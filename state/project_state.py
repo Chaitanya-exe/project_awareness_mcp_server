@@ -3,17 +3,13 @@ from pathlib import Path
 from threading import Lock
 
 
-DATA_FILE = Path("/app/data/projects.json").resolve()
+DATA_FILE = Path("data/projects.json").resolve()
 LOCK = Lock()
 
 def _load():
-    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-    default_data = {
-        "active_project": None,
-        "projects": {}
-    }
-    DATA_FILE.write_text(json.dumps(default_data, indent=4))
-    return default_data
+    # DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    data = json.loads((DATA_FILE.read_text()))
+    return data
 
 def _save(data):
     DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
