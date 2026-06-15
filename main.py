@@ -3,6 +3,7 @@ from tools import register_git_tools, register_project_structure_tools, register
 from routes.project_routes import register_project_routes
 import sys
 import argparse
+from db import init_db
 
 def main():
     parser = argparse.ArgumentParser(
@@ -23,11 +24,11 @@ def main():
         help="configure the port for MCP server"
     )
 
-
     mcp = FastMCP(name='project_context_interface',
                 instructions='This mcp server allows the MCP clients to execute various tools to get information about a project in a specified directory, clients can access repo information, project structure and read files for full project context.',
                 )
-
+    
+    init_db()
     register_git_tools(mcp)
     register_project_structure_tools(mcp)
     register_file_tools(mcp)

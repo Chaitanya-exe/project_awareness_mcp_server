@@ -1,56 +1,112 @@
 import json
 from pathlib import Path
 from threading import Lock
+from contextlib import contextmanager
+from db.config import SessionLocal
+from db.models import Project, ActiveProject
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.session import Session
 
 
 DATA_FILE = Path("data/projects.json").resolve()
 LOCK = Lock()
 
-def _load():
-    # DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-    data = json.loads((DATA_FILE.read_text()))
-    return data
+def _session():
+    """
+    get a db session for the local database to handle rollback/commit automatically
+    """
 
-def _save(data):
-    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-    DATA_FILE.write_text(json.dumps(data, indent=4))
-    print(f"data saved at {DATA_FILE}")
+    db_session = SessionLocal()
 
-def get_state():
-    with LOCK:
-        return _load()
+    try:
+        yield db_session
+        db_session.commit()
+    except Exception:
+        db_session.rollback()
+        raise
+    finally:
+        db_session.close()
+    
+def _ensure_active_row(db: Session) -> ActiveProject:
+    row = db.get(ActiveProject, 1)
+    
+    if row is None:
+        row = ActiveProject(id=1, project_name=None)
+        db.add(row)
+        db.flush()
+    
+    return row
     
 def add_project(name: str, path: str):
-    with LOCK:
-        data = _load()
-        if name in data["projects"]:
-            raise ValueError(f"project with {name} already exists")
-        
-        data["projects"][name] = path
-        _save(data)
+    
+    with _session() as db:
+        existing = db.get(Project, name)
+
+        if existing:
+            return { "error": f"Project with {name} already exists."}
+
+        project = Project(name=name, path=path)
+        db.add(project)
+        return { "success": True, "project": {"name": name, "path": path}}
+    
 
 def remove_project(name: str):
-    with LOCK:
-        data = _load()
-        data["projects"].pop(name, None)
-        if data["active_project"] == name:
-            data["active_project"] = None
-        _save(data)
+    
+    with _session() as db:
+        existing = db.get(Project, name)
+
+        if existing is None:
+            return {"error": "Project '{name}' doesn't exist."}
+
+        db.delete(existing)
+        return {"success": True, "removed":name} 
+
+
+def list_projects() -> list[dict]:
+
+    with _session() as db:
+
+        projects = db.query(Project).order_by(Project.name).all()
+
+        return [p.to_dict() for p in projects]
 
 def set_active_project(name: str):
-    with LOCK:
-        data = _load()
-        if name not in data["projects"]:
-            raise ValueError(f"project with {name} does not exists")
-        data["active_project"] = name
-        _save(data)
+    
+    with _session() as db:
+        project = db.get(Project, name)
 
-def get_current_project_path() -> Path:
-    data = _load()
-    name = data["active_project"]
+        if not project:
+            return {"error": f"Project '{name}' does not exist."}
+        
+        row = _ensure_active_row(db)
+        row.project_name = name
 
-    if not name:
-        raise RuntimeError("No active project set.")
+        return {"success": True, "active_project":name}
 
-    return Path(data["projects"][name]).resolve()
+def get_current_project_path() -> str:
+    
+    with _session() as db:
 
+        row = db.get(ActiveProject, 1)
+
+        if row is None or row.project_name is None:
+            raise RuntimeError("No active project set. Set an active project first.")
+
+        project = db.get(Project, row.project_name)
+
+        if not project:
+            raise RuntimeError(f"Project '{row.project_name}' no longer exists.")
+
+        return project.path    
+
+def get_current_project_name() -> str:
+
+    with _session() as db:
+
+        row = db.get(ActiveProject, 1)
+
+        if row is None:
+            raise RuntimeError("No active project set. Set an active project first.")
+        
+        return row.project_name
+    

@@ -1,12 +1,12 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 
-URL = os.getenv("DATABASE_URL","postgresql+psycopg://mcp_user:mcp_pass1234@localhost:5432/mcp_server")
+_DB_PATH = os.getenv("DB_PATH")
+URL = f"sqlite:///{_DB_PATH}"
 
 
-engine = create_engine(URL)
-SessionLocal = sessionmaker(bind=engine)
+engine = create_engine(URL, connect_args={"check_same_thread": False}, echo=False)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
-class Base(DeclarativeBase):
-    pass
+Base = declarative_base()

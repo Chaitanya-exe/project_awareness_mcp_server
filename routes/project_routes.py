@@ -7,7 +7,7 @@ def register_project_routes(mcp: FastMCP):
 
     @mcp.custom_route("/projects/all", methods=["GET"])
     async def list_projects(request: Request) -> Response:
-        return JSONResponse(ps.get_state())
+        return JSONResponse(ps.list_projects())
     
     @mcp.custom_route("/projects/add", methods=["POST"])
     async def add_projects(request: Request) -> PlainTextResponse:
