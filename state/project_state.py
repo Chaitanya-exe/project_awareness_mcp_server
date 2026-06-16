@@ -11,6 +11,7 @@ from sqlalchemy.orm.session import Session
 DATA_FILE = Path("data/projects.json").resolve()
 LOCK = Lock()
 
+@contextmanager
 def _session():
     """
     get a db session for the local database to handle rollback/commit automatically
@@ -43,7 +44,7 @@ def add_project(name: str, path: str):
         existing = db.get(Project, name)
 
         if existing:
-            return { "error": f"Project with {name} already exists."}
+            raise RuntimeError(f"Project with {name} already exists.")
 
         project = Project(name=name, path=path)
         db.add(project)
@@ -56,7 +57,7 @@ def remove_project(name: str):
         existing = db.get(Project, name)
 
         if existing is None:
-            return {"error": "Project '{name}' doesn't exist."}
+            raise RuntimeError("Project '{name}' doesn't exist.")
 
         db.delete(existing)
         return {"success": True, "removed":name} 
@@ -76,7 +77,7 @@ def set_active_project(name: str):
         project = db.get(Project, name)
 
         if not project:
-            return {"error": f"Project '{name}' does not exist."}
+            raise RuntimeError(f"Project '{name}' does not exist.")
         
         row = _ensure_active_row(db)
         row.project_name = name

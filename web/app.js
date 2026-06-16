@@ -1,16 +1,24 @@
+
 async function fetchState() {
   const res = await fetch("/projects/all");
   const data = await res.json();
-  renderProjects(data);
+  console.log(data)
+  await renderProjects(data);
 }
 
-function renderProjects(data) {
+async function renderProjects(data) {
   const container = document.getElementById("projects");
   container.innerHTML = "";
 
-  const active = data.active_project;
+  const activeRes = await fetch("/projects/active");
+  const activeData = await activeRes.json();
+  console.log(activeData)
+  const active = activeData.name ?? null;
 
-  for (const [name, path] of Object.entries(data.projects)) {
+  for (const project of data.projects) {
+    const name = project.name;
+    const path = project.path;
+
     const item = document.createElement("div");
     item.className = "project-item";
 
@@ -50,16 +58,14 @@ function renderProjects(data) {
 
     actions.appendChild(activateBtn);
     actions.appendChild(deleteBtn);
-
     item.appendChild(info);
     item.appendChild(actions);
-
     container.appendChild(item);
   }
 }
 
 async function addProject() {
-  response = await fetch("/projects/add", {
+  const response = await fetch("/projects/add", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -69,37 +75,37 @@ async function addProject() {
   });
 
   if (!response.ok) {
-    alert("one of the fields is missing, Please check your input") 
-    return
+    alert("One of the fields is missing, please check your input");
+    return;
   }
 
-  fetchState();
+  await fetchState();
 }
 
 async function activateProject(name) {
-  response = await fetch("/projects/set", {
+  const response = await fetch("/projects/set", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name })
   });
 
   if (response.ok) {
-    alert("Activated "+ name + " successfully")
+    alert("Activated " + name + " successfully");
   }
 
-  fetchState();
+  await fetchState();
 }
 
 async function deleteProject(name) {
-  response = await fetch(`/projects/${name}`, {
+  const response = await fetch(`/projects/${name}`, {
     method: "DELETE"
   });
 
   if (!response.ok) {
-    alert("Invalid request")
+    alert("Invalid request");
   }
 
-  fetchState();
+  await fetchState();
 }
 
 fetchState();
