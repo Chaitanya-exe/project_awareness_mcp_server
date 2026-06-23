@@ -287,6 +287,13 @@ def register_file_tools(mcp: FastMCP):
     """
         return file_tool.read_file(relative_path, mode, start_line, end_line, max_chars)
 
+    @mcp.tool
+    def grep_file_tool(query: str, is_regex: bool = False, scope: str | None = '.', wildcard: list[str] | None = None, max_results: int = 50):
+        """
+        Grep file tool to search for a content in the files with flexibility, allows to search for a query in multiple files.
+        """
+
+        return file_tool.grep_tool(query=query, is_regex=is_regex, scope=scope, wildcard=wildcard, max_results=max_results)
 
 # Manager tools are required for when using with mcpo proxy
 # def register_manager_tools(mcp: FastMCP):
