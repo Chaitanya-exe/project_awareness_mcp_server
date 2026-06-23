@@ -93,7 +93,14 @@ class SearchFiles:
         results: list[dict] = []
 
         for path in search_scope.iterdir():
+            
+            pattern = (
+                re.compile(query) if is_regex else re.compile(re.escape(query), re.IGNORECASE)
+            )
 
             if path.is_file():
+                pass
+
+            for file in path.rglob(""):
                 pass
             
