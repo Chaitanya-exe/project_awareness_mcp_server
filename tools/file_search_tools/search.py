@@ -1,13 +1,42 @@
 from pathlib import Path
 from tools.utils import get_current_project_path
 import re
+from fnmatch import fnmatch
+import os
 
 class SearchFiles:
     def __init__(self):
-        with open('.gitignore', "r") as file:
-            IGNORED = [line.strip() for line in file.readlines()]
-        self.IGNORED = IGNORED
-        pass
+        self.IGNORED_DIRS = {
+            ".git",
+            ".venv",
+            "node_modules",
+            "__pycache__",
+            ".mypy_cache",
+            ".pytest_cache"
+        }
+
+    def _load_ignored(self):
+        
+        root = Path(get_current_project_path()).resolve()
+
+        gitignore = (root / '.gitignore').resolve()
+        ignored = set(self.IGNORED_DIRS)
+        if gitignore.exists():
+
+            with open(gitignore, "r") as f:
+
+                for line in f:
+                    line = line.strip()
+
+                    if not line or line.startswith("#"):
+                        continue
+                    ignored.add(line.rstrip("/"))
+        
+        return ignored
+
+
+    def _is_ignored(self, name: str, patterns: set[str]) -> bool:
+        return any(fnmatch(name, pattern) for pattern in patterns)
 
     def read_file(self, relative_path: str, mode: str = "auto",start_line: int | None = None, end_line: int | None = None, max_chars: int = 8000) -> dict:
         
@@ -79,28 +108,33 @@ class SearchFiles:
             root = Path(get_current_project_path()).resolve()
             search_scope = root
         except Exception as e:
-            {'error': str(e)}
+            return {'error': str(e)}
         
         if scope != '.':
             search_scope = (search_scope / scope).resolve()
 
-            if not str(search_scope).startswith(root):
+            if not str(search_scope).startswith(str(root)):
                 return {"error": "access_denied"}
             
             if not search_scope.exists():
                 return {"error": "path does not exists"}
         
         results: list[dict] = []
+        
+        flags = re.IGNORECASE
+        pattern_str = query if is_regex else re.escape(query)
+        
+        try:
+            pattern = re.compile(pattern_str, flags)
+        except re.error as e:
+            return {"error": str(e)}
 
-        for path in search_scope.iterdir():
-            
-            pattern = (
-                re.compile(query) if is_regex else re.compile(re.escape(query), re.IGNORECASE)
-            )
+        globs = wildcard if wildcard else ["*"]
+        ignored = self._load_ignored()
 
-            if path.is_file():
-                pass
+        for dirpath, dirnames, filenames in os.walk(search_scope):
+            dirnames[:] = [d for d in dirnames if not self._is_ignored(d, ignored)]
 
-            for file in path.rglob(""):
-                pass
+            filenames[:] = [f for f in filenames if not self._is_ignored(f, ignored)]
+
             
