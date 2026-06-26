@@ -10,6 +10,6 @@ wheels/
 .venv
 data/
 data/
-rap.txt
+*.txt
 .env
 None
