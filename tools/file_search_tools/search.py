@@ -1,5 +1,5 @@
 from pathlib import Path
-from tools.utils import get_current_project_path
+from ..utils import get_current_project_path
 import re
 from fnmatch import fnmatch
 import os
@@ -37,6 +37,15 @@ class SearchFiles:
 
     def _is_ignored(self, name: str, patterns: set[str]) -> bool:
         return any(fnmatch(name, pattern) for pattern in patterns)
+    
+    def _is_binary(self, file: Path):
+        try:
+            with open(file, "rb") as f:
+                chunk = f.read(8192)
+            return b"\x00" in chunk
+        except Exception as e:
+            return True
+
 
     def read_file(self, relative_path: str, mode: str = "auto",start_line: int | None = None, end_line: int | None = None, max_chars: int = 8000) -> dict:
         
@@ -135,6 +144,47 @@ class SearchFiles:
         for dirpath, dirnames, filenames in os.walk(search_scope):
             dirnames[:] = [d for d in dirnames if not self._is_ignored(d, ignored)]
 
-            filenames[:] = [f for f in filenames if not self._is_ignored(f, ignored)]
+            filenames[:] = [f for f in filenames if self._is_ignored(f, globs)]
 
-            
+            for file in filenames:
+                file_path = Path(dirpath) / file
+                if self._is_binary(file_path):
+                    continue
+
+                try:
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                        lines = f.read().splitlines()
+                except Exception as e:
+                    continue
+
+                for idx, line in enumerate(lines):
+                    
+                    if pattern.search(line):
+                        start = max(0, idx - 5)
+                        end = min(len(lines), idx + 5 + 1)
+
+                        context_before = lines[start:idx]
+                        context_after = lines[idx+1 :end]
+
+                        results.append({
+                            "file": str(file_path.relative_to(root)),
+                            "line": idx+1,
+                            "match": line,
+                            "context_before": context_before,
+                            "context_after": context_after
+                        })
+
+                        if len(results) >= max_results:
+                            return {
+                                "query": query,
+                                "total_matches": len(results),
+                                "capped": True,
+                                "results": results
+                            }
+        
+        return {
+            "query": query,
+            "capped": False,
+            "total_matches": len(results),
+            "results": results
+        }

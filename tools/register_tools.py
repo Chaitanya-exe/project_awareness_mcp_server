@@ -287,13 +287,77 @@ def register_file_tools(mcp: FastMCP):
     """
         return file_tool.read_file(relative_path, mode, start_line, end_line, max_chars)
 
-    # @mcp.tool
-    # def grep_file_tool(query: str, is_regex: bool = False, scope: str | None = '.', wildcard: list[str] | None = None, max_results: int = 50):
-    #     """
-    #     Grep file tool to search for a content in the files with flexibility, allows to search for a query in multiple files.
-    #     """
+    @mcp.tool
+    def grep_file_tool(query: str, is_regex: bool = False, scope: str | None = '.', wildcard: list[str] | None = None, max_results: int = 50):
+        """
 
-    #     return file_tool.grep_tool(query=query, is_regex=is_regex, scope=scope, wildcard=wildcard, max_results=max_results)
+        Search the active project's codebase for lines matching a text pattern or regex,
+        returning each match with surrounding context lines.
+
+        Use this to locate where a function, variable, string, or pattern appears across
+        the project, instead of reading files one by one. Prefer this over read_file when
+        you don't already know which file contains what you're looking for.
+
+        Search is always case-insensitive. Binary files are detected and skipped
+        automatically. Directories ignored by .gitignore, plus common build/dependency
+        folders (.git, node_modules, .venv, __pycache__, etc.), are never searched.
+
+        Args:
+            query: The text to search for. Treated as a literal substring by default.
+                If is_regex is True, this is treated as a Python regular expression instead.
+            is_regex: If True, `query` is compiled as a regex pattern (re.search semantics,
+                so the match can occur anywhere in the line, not just at the start).
+                If False (default), `query` is matched as a literal string — regex special
+                characters in `query` are escaped automatically.
+            wildcard: Optional list of filename glob patterns to restrict the search to,
+                e.g. ["*.py"] or ["*.ts", "*.tsx"]. Patterns are OR'd together — a file is
+                searched if it matches ANY pattern in the list. If None (default), all
+                non-ignored files are searched regardless of extension.
+            scope: A path relative to the project root to limit the search to, e.g. "src"
+                or "tools/git_tools". Defaults to "." (the entire project root). Must
+                resolve inside the project root — paths that escape it are rejected.
+            max_results: Maximum number of matches to return before stopping early.
+                Defaults to 50. When this limit is hit, the search stops immediately
+                (it does not continue scanning to count the true total), and the response
+                sets "capped": true.
+
+        Returns:
+            A dict shaped as:
+            {
+                "query": str,            # echoes the original query
+                "total_matches": int,    # number of matches actually returned (<= max_results)
+                "capped": bool,          # True if max_results was hit and the search
+                                        # stopped early — there may be more matches
+                                        # not shown
+                "results": [
+                    {
+                        "file": str,              # path relative to the project root
+                        "line": int,              # 1-indexed line number of the match
+                        "match": str,             # the full content of the matching line
+                        "context_before": list[str],  # up to 5 lines before the match
+                                                        # (fewer if near the start of the file)
+                        "context_after": list[str],   # up to 5 lines after the match
+                                                        # (fewer if near the end of the file)
+                    },
+                    ...
+                ]
+            }
+
+            On failure (e.g. invalid regex, no active project set, scope path doesn't
+            exist or escapes the project root), returns {"error": "<description>"} instead.
+
+        Examples:
+            grep_tool(query="get_active_project_name")
+                → finds every line referencing that function, anywhere in the project.
+
+            grep_tool(query="TODO", wildcard=["*.py"])
+                → finds TODO comments, but only in Python files.
+
+            grep_tool(query=r"def\\s+\\w+_tool", is_regex=True, scope="tools")
+                → finds tool method definitions, only inside the tools/ directory.
+        """
+
+        return file_tool.grep_tool(query=query, is_regex=is_regex, scope=scope, wildcard=wildcard, max_results=max_results)
 
 # Manager tools are required for when using with mcpo proxy
 # def register_manager_tools(mcp: FastMCP):
